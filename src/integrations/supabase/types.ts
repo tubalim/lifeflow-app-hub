@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          item_name: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          item_name: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          item_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habits: {
+        Row: {
+          created_at: string
+          exercise: boolean
+          habit_date: string
+          id: string
+          study: boolean
+          user_id: string
+          water: boolean
+        }
+        Insert: {
+          created_at?: string
+          exercise?: boolean
+          habit_date?: string
+          id?: string
+          study?: boolean
+          user_id: string
+          water?: boolean
+        }
+        Update: {
+          created_at?: string
+          exercise?: boolean
+          habit_date?: string
+          id?: string
+          study?: boolean
+          user_id?: string
+          water?: boolean
+        }
+        Relationships: []
+      }
+      notes: {
+        Row: {
+          content: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      todos: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
