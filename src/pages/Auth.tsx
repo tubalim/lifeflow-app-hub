@@ -6,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, Loader2 } from 'lucide-react';
+import { Heart, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const emailSchema = z.string().email('Please enter a valid email address');
+const emailSchema = z.string().trim().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 export default function Auth() {
@@ -19,10 +20,11 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
 
@@ -30,6 +32,7 @@ export default function Auth() {
     try {
       emailSchema.parse(email);
       passwordSchema.parse(password);
+      setConnectionError(null);
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -44,18 +47,26 @@ export default function Auth() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    const { error } = await signIn(email, password);
+    setConnectionError(null);
+    
+    const { error } = await signIn(email.trim(), password);
     setIsSubmitting(false);
 
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Invalid email or password');
+      const errorMessage = error.message.toLowerCase();
+      
+      if (errorMessage.includes('connection') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        setConnectionError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid email or password')) {
+        toast.error('Invalid email or password. Please check your credentials or sign up for a new account.');
+      } else if (errorMessage.includes('email not confirmed')) {
+        toast.error('Please confirm your email before signing in.');
       } else {
-        toast.error(error.message);
+        toast.error(error.message || 'An error occurred during sign in.');
       }
     } else {
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   };
 
@@ -64,17 +75,27 @@ export default function Auth() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    const { error } = await signUp(email, password);
+    setConnectionError(null);
+    
+    const { error, user: newUser } = await signUp(email.trim(), password);
     setIsSubmitting(false);
 
     if (error) {
-      if (error.message.includes('already registered')) {
-        toast.error('This email is already registered. Please sign in.');
+      const errorMessage = error.message.toLowerCase();
+      
+      if (errorMessage.includes('connection') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        setConnectionError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (errorMessage.includes('already registered') || errorMessage.includes('already been registered')) {
+        toast.error('This email is already registered. Please sign in instead.');
+      } else if (errorMessage.includes('password')) {
+        toast.error('Password must be at least 6 characters long.');
       } else {
-        toast.error(error.message);
+        toast.error(error.message || 'An error occurred during sign up.');
       }
-    } else {
-      toast.success('Account created! You can now sign in.');
+    } else if (newUser) {
+      toast.success('Account created successfully! Welcome to LifeFlow!');
+      // Instant redirect - user is already authenticated with auto-confirm
+      navigate('/dashboard', { replace: true });
     }
   };
 
@@ -101,6 +122,13 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {connectionError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{connectionError}</AlertDescription>
+            </Alert>
+          )}
+          
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -118,6 +146,7 @@ export default function Auth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -129,6 +158,7 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -155,6 +185,7 @@ export default function Auth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -166,6 +197,7 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="new-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -178,6 +210,9 @@ export default function Auth() {
                     'Create Account'
                   )}
                 </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  By signing up, you agree to our terms and conditions.
+                </p>
               </form>
             </TabsContent>
           </Tabs>
